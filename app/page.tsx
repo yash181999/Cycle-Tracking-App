@@ -26,10 +26,13 @@ export default function Home() {
   const [path, setPath] = useState<Coord[]>([]);
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
   const [showMap, setShowMap] = useState<boolean>(false);
+  const [startTime, setStartTime] = useState<Date | undefined>(new Date());
+  const [endTime, setEndTime] = useState<Date | undefined>(new Date());
 
   const startTracking = () => {
     setPath([]);
     setTracking(true);
+    setStartTime(new Date());
     navigator.geolocation.watchPosition(
       (position) => {
         const newCoords: Coord = {
@@ -39,13 +42,14 @@ export default function Home() {
         setPath((prevPath) => [...prevPath, newCoords]);
       },
       (error) => console.error(error),
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: false }
     );
   };
 
   const stopTracking = () => {
     setTracking(false);
     setShowMap(true);
+    setEndTime(new Date());
   };
 
   const pauseTracking = () => {
@@ -77,6 +81,43 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [tracking]);
 
+  // show time in the format hours minute and seconds only
+  function formatSeconds(seconds: number) {
+    const hours = Math.floor(seconds / 3600)
+      .toString()
+      .padStart(2, "0");
+    const minutes = Math.floor((seconds % 3600) / 60)
+      .toString()
+      .padStart(2, "0");
+    const secondsLeft = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
+
+    const formattedSeconds = `${hours}:${minutes}:${secondsLeft}`;
+
+    return formattedSeconds;
+  }
+
+  const getTotalTimeInHours = (
+    startTime: Date | undefined,
+    endTime: Date | undefined
+  ) => {
+    if (!startTime || !endTime) return 0;
+    // Calculate the total time in milliseconds
+    const startMs = startTime.getTime();
+    const endMs = endTime.getTime();
+    const totalTimeMs = endMs - startMs;
+
+    // Convert the total time in milliseconds to hours
+    const totalTimeHours = totalTimeMs / 1000 / 60 / 60;
+
+    return totalTimeHours;
+  };
+
+  const getSpeed = (distance: number, time: number) => {
+    return (getDistanceTravelled() / time).toFixed(2);
+  };
+
   return (
     <div className="flex justify-center items-center flex-col p-20">
       <div className="border-4 border-solid border-sky-500">
@@ -90,7 +131,6 @@ export default function Home() {
             }}
             style={{ width: "500px", height: "500px" }}
             mapStyle="mapbox://styles/mapbox/streets-v11"
-            // disable the default attribution
             attributionControl={false}
           >
             <Source
@@ -138,12 +178,16 @@ export default function Home() {
         </Button>
       </div>
 
-      <div>Time Elapsed: {timeElapsed * 0.0166667}</div>
+      <div>Time Elapsed: {formatSeconds(timeElapsed)}</div>
       <div>
-        Current Speed: {(getDistanceTravelled() / timeElapsed) * 0.0166667}
+        Current Speed:{" "}
+        {getSpeed(
+          getDistanceTravelled(),
+          getTotalTimeInHours(startTime, endTime)
+        )}
+        km/hr
       </div>
 
-      <button onClick={stopTracking}>Stop Tracking</button>
       <div>Total Distance {getDistanceTravelled()}</div>
     </div>
   );
