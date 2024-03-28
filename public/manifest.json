@@ -1,0 +1,17 @@
+{
+  "name": "Cycle Tracking App",
+  "short_name": "CycleTrack",
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "/cycle-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
+}
